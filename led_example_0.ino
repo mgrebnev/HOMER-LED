@@ -11,9 +11,10 @@ int LOVE_LED_PIN = 11;
 
 /* States */
 boolean INCREASE_BUTTON_WAS_UP         = true;  
-boolean IS_FLASHER_BUTTON_ENABLED      = true;
+boolean IS_FLASHER_BUTTON_ENABLED      = false;
 boolean IS_INTERVAL_PASSED             = false;
 boolean IS_DECREASE_BRIGHTNESS_ENABLED = false;
+boolean IS_FLASHER_ENABLED             = false;
 
 /* Components variable values */
 int MAX_BRIGHTNESS = 250;
@@ -34,19 +35,19 @@ void setup() {
   pinMode(R_LED_PIN,    OUTPUT);
   pinMode(LOVE_LED_PIN, OUTPUT);
 
-  analogWrite(3,  0);
-  analogWrite(5,  CURRENT_BRIGHTNESS);
-  analogWrite(6,  CURRENT_BRIGHTNESS);
-  analogWrite(9,  CURRENT_BRIGHTNESS);
-  analogWrite(10, CURRENT_BRIGHTNESS);
-  analogWrite(11, CURRENT_BRIGHTNESS);
+  analogWrite(3,  DEFAULT_BRIGHTNESS);
+  analogWrite(5,  DEFAULT_BRIGHTNESS);
+  analogWrite(6,  DEFAULT_BRIGHTNESS);
+  analogWrite(9,  DEFAULT_BRIGHTNESS);
+  analogWrite(10, DEFAULT_BRIGHTNESS);
+  analogWrite(11, DEFAULT_BRIGHTNESS);
 }
 
 
 void loop() {
   unsigned long currentMillis = millis();
 
-  if (IS_FLASHER_BUTTON_ENABLED) {
+  if (IS_FLASHER_ENABLED) {
     if (currentMillis - PREVIOUS_MILLIS >= 15 && !IS_INTERVAL_PASSED) {
       if (CURRENT_BRIGHTNESS >= MAX_BRIGHTNESS) {
         IS_DECREASE_BRIGHTNESS_ENABLED = true; 
@@ -58,12 +59,7 @@ void loop() {
 
       CURRENT_BRIGHTNESS = IS_DECREASE_BRIGHTNESS_ENABLED ? CURRENT_BRIGHTNESS - 3 : CURRENT_BRIGHTNESS + 2;
 
-      analogWrite(H_LED_PIN,    CURRENT_BRIGHTNESS);
-      analogWrite(O_LED_PIN,    CURRENT_BRIGHTNESS);
-      analogWrite(M_LED_PIN,    CURRENT_BRIGHTNESS);
-      analogWrite(E_LED_PIN,    CURRENT_BRIGHTNESS);
-      analogWrite(R_LED_PIN,    CURRENT_BRIGHTNESS);
-      analogWrite(LOVE_LED_PIN, CURRENT_BRIGHTNESS);
+      setBrightness(H_LED_PIN, CURRENT_BRIGHTNESS);
 
       IS_INTERVAL_PASSED = true;
       PREVIOUS_MILLIS = currentMillis;
@@ -71,9 +67,9 @@ void loop() {
     } else {
       IS_INTERVAL_PASSED = currentMillis - PREVIOUS_MILLIS == 0;  
     }
-
   }
-  //handleFlasherButton();
+
+  handleFlasherButton();
   handleIncreaseButton();
 }
 
@@ -85,9 +81,9 @@ void handleFlasherButton() {
 
     flasherButtonUp = digitalRead(FLASHER_BUTTON_PIN);
     if (!flasherButtonUp) { 
-      IS_FLASHER_BUTTON_ENABLED = !IS_FLASHER_BUTTON_ENABLED;
+      IS_FLASHER_ENABLED = !IS_FLASHER_ENABLED;
+      setGeneralBrightness(DEFAULT_BRIGHTNESS + 20);
     }
-    analogWrite(H_LED_PIN, CURRENT_BRIGHTNESS);
   }
 
   IS_FLASHER_BUTTON_ENABLED = flasherButtonUp;
@@ -103,8 +99,23 @@ void handleIncreaseButton() {
     if (!increaseButtonUp) { 
       CURRENT_BRIGHTNESS = CURRENT_BRIGHTNESS >= MAX_BRIGHTNESS ? DEFAULT_BRIGHTNESS : CURRENT_BRIGHTNESS + 20;
     }
-    analogWrite(H_LED_PIN, CURRENT_BRIGHTNESS);
-  }
 
+    setGeneralBrightness(CURRENT_BRIGHTNESS);
+  }
   INCREASE_BUTTON_WAS_UP = increaseButtonUp;
+}
+
+void setGeneralBrightness(int brightness) {
+  setBrightness(H_LED_PIN,    brightness);
+  setBrightness(O_LED_PIN,    brightness);
+  setBrightness(M_LED_PIN,    brightness);
+  setBrightness(E_LED_PIN,    brightness);
+  setBrightness(R_LED_PIN,    brightness);
+  setBrightness(LOVE_LED_PIN, brightness);
+
+  CURRENT_BRIGHTNESS = brightness;
+}
+
+void setBrightness(int pin, int brightness) {
+  analogWrite(pin, brightness);
 }
